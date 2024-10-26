@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"restapi/domain"
 	"restapi/storage/sqlite"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -16,7 +17,7 @@ type App struct {
 	Mux         *http.ServeMux
 	middlewares []middleware
 
-	userStore *sqlite.UserStore
+	UserService domain.UserService
 }
 
 func New(logger *slog.Logger, db *sql.DB) *App {
@@ -25,9 +26,9 @@ func New(logger *slog.Logger, db *sql.DB) *App {
 	userStore := sqlite.NewUserStore(db)
 
 	app := &App{
-		Logger:    logger,
-		Mux:       mux,
-		userStore: userStore,
+		Logger:      logger,
+		Mux:         mux,
+		UserService: userStore,
 	}
 	return app
 }
@@ -62,6 +63,8 @@ func (a *App) RegisterRoutes() {
 }
 
 func (a *App) ListenAndServe(port string) error {
+	a.RegisterRoutes()
+
 	server := &http.Server{
 		Addr:    ":" + port,
 		Handler: a.Mux,

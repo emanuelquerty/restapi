@@ -10,14 +10,8 @@ import (
 )
 
 func (a *App) checkHealth(w http.ResponseWriter, r *http.Request) {
-	res := struct {
-		Msg string `json:"msg,omitempty"`
-	}{
-		Msg: "server is running",
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(res)
+	res := response.New("server is running")
+	response.WriteJSON(a.Logger, w, res, http.StatusOK)
 }
 
 func (a *App) createUser(w http.ResponseWriter, r *http.Request) {
@@ -26,30 +20,29 @@ func (a *App) createUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		res := response.New("could not create user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 
 	err = user.HashPassword()
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		res := response.New("could not create user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusInternalServerError)
 		return
 	}
 
-	err = a.userStore.Create(r.Context(), &user)
+	err = a.UserService.Create(r.Context(), &user)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		res := response.New("could not create user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 
-	res := response.SingleUser{
-		Description: "user created successfully",
-		User:        response.MapToUser(user),
-	}
-
-	response.WriteJSON(a.Logger, w, res, 201)
+	res := response.New("user created successfully").WithUser(user)
+	response.WriteJSON(a.Logger, w, res, http.StatusCreated)
 }
 
 func (a *App) updateUser(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +51,8 @@ func (a *App) updateUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		res := response.New("could not update user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 
@@ -66,7 +60,8 @@ func (a *App) updateUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idString)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		res := response.New("could not update user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 	user.ID = id
@@ -74,7 +69,8 @@ func (a *App) updateUser(w http.ResponseWriter, r *http.Request) {
 	err = user.HashPassword()
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		res := response.New("could not update user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusInternalServerError)
 		return
 	}
 
@@ -84,19 +80,16 @@ func (a *App) updateUser(w http.ResponseWriter, r *http.Request) {
 	updates["email"] = user.Email
 	updates["password"] = user.PasswordHash
 
-	user, err = a.userStore.Update(r.Context(), id, updates)
+	user, err = a.UserService.Update(r.Context(), id, updates)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		res := response.New("could not update user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 
-	res := response.SingleUser{
-		Description: "user updated successfully",
-		User:        response.MapToUser(user),
-	}
-
-	response.WriteJSON(a.Logger, w, res, 200)
+	res := response.New("user updated successfully").WithUser(user)
+	response.WriteJSON(a.Logger, w, res, http.StatusOK)
 }
 
 func (a *App) findUserByID(w http.ResponseWriter, r *http.Request) {
@@ -105,39 +98,34 @@ func (a *App) findUserByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idString)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		res := response.New("could not find user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 
-	user, err := a.userStore.FindByID(r.Context(), id)
+	user, err := a.UserService.FindByID(r.Context(), id)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		res := response.New("could not find user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 
-	res := response.SingleUser{
-		Description: "found 1 user",
-		User:        response.MapToUser(user),
-	}
-
-	response.WriteJSON(a.Logger, w, res, 200)
+	res := response.New("found 1 user").WithUser(user)
+	response.WriteJSON(a.Logger, w, res, http.StatusOK)
 }
 
 func (a *App) findAllUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := a.userStore.FindAll(r.Context())
+	users, err := a.UserService.FindAll(r.Context())
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		res := response.New("could not retrieve users").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusInternalServerError)
 		return
 	}
 
-	descritption := fmt.Sprintf("found %d users", len(users))
-	res := response.MultiUser{
-		Description: descritption,
-		Users:       response.MapToUsers(users),
-	}
-
+	description := fmt.Sprintf("found %d users", len(users))
+	res := response.New(description).WithUsers(users)
 	response.WriteJSON(a.Logger, w, res, 200)
 }
 
@@ -146,20 +134,21 @@ func (a *App) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idString)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		res := response.New("could not delete user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 
-	err = a.userStore.Delete(r.Context(), id)
+	err = a.UserService.Delete(r.Context(), id)
 	if err != nil {
 		a.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		res := response.New("could not delete user").WithError(err)
+		response.WriteJSON(a.Logger, w, res, http.StatusBadRequest)
 		return
 	}
 
-	msg := fmt.Sprintf("user with id %s was deleted successfully", idString)
-	res := response.Generic{Description: msg}
+	descripion := fmt.Sprintf("user with id %s was deleted successfully", idString)
+	res := response.New(descripion)
 
-	w.Header().Set("Content-Type", "application/json")
 	response.WriteJSON(a.Logger, w, res, http.StatusOK)
 }

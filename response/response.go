@@ -1,45 +1,40 @@
 package response
 
 import (
-	"encoding/json"
-	"log/slog"
-	"net/http"
 	"restapi/domain"
 )
 
-func WriteJSON(logger *slog.Logger, w http.ResponseWriter, data any, statusCode int) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
+type Response struct {
+	Description  string  `json:"description,omitempty"  bson:"description"`
+	ErrorMessage string  `json:"error_message,omitempty"  bson:"error_message"`
+	User         *User   `json:"user,omitempty"  bson:"user"`
+	Users        *[]User `json:"users,omitempty"  bson:"users"`
+}
 
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
-		logger.Error("error encoding json", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+func New(descripion string) *Response {
+	return &Response{
+		Description: descripion,
 	}
 }
 
-func MapToUser(user domain.User) UserWithNoPasswordField {
-	var resUser UserWithNoPasswordField
-
-	resUser.ID = user.ID
-	resUser.FirstName = user.FirstName
-	resUser.LastName = user.LastName
-	resUser.Email = user.Email
-
-	return resUser
+func (r *Response) WithError(err error) *Response {
+	r.ErrorMessage = err.Error()
+	return r
 }
 
-func MapToUsers(users []domain.User) []UserWithNoPasswordField {
-	var resUsers []UserWithNoPasswordField
-	for _, user := range users {
-		var currUser UserWithNoPasswordField
+func (r *Response) WithUser(user domain.User) *Response {
+	respUser := domainToResponseUser(user)
+	r.User = &respUser
+	return r
+}
 
-		currUser.ID = user.ID
-		currUser.FirstName = user.FirstName
-		currUser.LastName = user.LastName
-		currUser.Email = user.Email
+func (r *Response) WithUsers(users []domain.User) *Response {
+	var respUsers []User
 
-		resUsers = append(resUsers, currUser)
+	for _, currUser := range users {
+		user := domainToResponseUser(currUser)
+		respUsers = append(respUsers, user)
 	}
-	return resUsers
+	r.Users = &respUsers
+	return r
 }

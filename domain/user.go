@@ -1,6 +1,10 @@
 package domain
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"context"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type User struct {
 	ID           int    `json:"id,omitempty"`
@@ -9,6 +13,14 @@ type User struct {
 	Email        string `json:"email,omitempty"`
 	Password     string `json:"password,omitempty"`
 	PasswordHash string `json:"password_hash,omitempty"`
+}
+
+type UserService interface {
+	Create(ctx context.Context, user *User) error
+	Update(ctx context.Context, id int, updates map[string]any) (User, error)
+	FindByID(ctx context.Context, id int) (User, error)
+	Delete(ctx context.Context, id int) error
+	FindAll(ctx context.Context) ([]User, error)
 }
 
 func (u *User) HashPassword() error {
