@@ -23,8 +23,6 @@ func main() {
 	app.Use(middleware.AccessLogger)
 	app.Use(middleware.SecurityHeaders)
 
-	app.RegisterRoutes()
-
 	err = app.ListenAndServe("3000")
 	if err != nil {
 		logger.Error("could not start server", slog.String("error", err.Error()))
