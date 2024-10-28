@@ -48,7 +48,7 @@ func TestUserEndpoints(t *testing.T) {
 			t.Fatalf("got %s but want nil", err)
 		}
 
-		if !reflect.DeepEqual(gotResp.User, wantUser) {
+		if !reflect.DeepEqual(gotResp.User, &wantUser) {
 			t.Fatalf("got %+v but want %+v", gotResp.User, wantUser)
 		}
 
@@ -85,9 +85,46 @@ func TestUserEndpoints(t *testing.T) {
 			t.Fatalf("got %s but want nil", err)
 		}
 
-		if !reflect.DeepEqual(gotResp.User, wantUser) {
+		if !reflect.DeepEqual(gotResp.User, &wantUser) {
 			t.Fatalf("got %+v but want %+v", gotResp.User, wantUser)
 		}
 
 	})
+
+	// t.Run("deletes a user", func(t *testing.T) {
+	// 	user := domain.User{
+	// 		FirstName: "Freddy",
+	// 		LastName:  "Krueger",
+	// 		Email:     "freddywillfindyou@email.com",
+	// 		Password:  "Nightmare In Elm Street",
+	// 	}
+
+	// 	userBytes, _ := json.Marshal(user)
+	// 	buf := bytes.NewBuffer(userBytes)
+
+	// 	req := httptest.NewRequest(http.MethodPost, "/api/users", buf)
+	// 	resp := httptest.NewRecorder()
+
+	// 	app.Mux.ServeHTTP(resp, req)
+
+	// 	// id of new user should be 3
+	// 	wantUser := response.User{
+	// 		ID:        3,
+	// 		FirstName: user.FirstName,
+	// 		LastName:  user.LastName,
+	// 		Email:     user.Email,
+	// 	}
+
+	// 	var gotResp response.Response
+
+	// 	err := json.NewDecoder(resp.Body).Decode(&gotResp)
+	// 	if err != nil {
+	// 		t.Fatalf("got %s but want nil", err)
+	// 	}
+
+	// 	if !reflect.DeepEqual(gotResp.User, &wantUser) {
+	// 		t.Fatalf("got %+v but want %+v", gotResp.User, wantUser)
+	// 	}
+
+	// })
 }
