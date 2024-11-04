@@ -2,8 +2,6 @@ package domain
 
 import (
 	"context"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -21,14 +19,4 @@ type UserService interface {
 	FindByID(ctx context.Context, id int) (User, error)
 	Delete(ctx context.Context, id int) error
 	FindAll(ctx context.Context) ([]User, error)
-}
-
-func (u *User) HashPassword() error {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-
-	u.PasswordHash = string(bytes)
-	return nil
 }
