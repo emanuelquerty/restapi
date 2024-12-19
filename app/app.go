@@ -2,6 +2,8 @@ package app
 
 import (
 	"database/sql"
+	"encoding/json"
+	"log"
 	"log/slog"
 	"net/http"
 	"restapi/domain"
@@ -9,6 +11,18 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+type appHandler func(w http.ResponseWriter, r *http.Request) *appError
+
+func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if e := fn(w, r); e != nil { // e is *appError, not os.Error
+		log.Printf("%v", e.Error)
+		err := json.NewEncoder(w).Encode(e)
+		if err != nil {
+			http.Error(w, e.Message, e.Code)
+		}
+	}
+}
 
 type middleware func(*slog.Logger, http.Handler) http.Handler
 
@@ -47,18 +61,18 @@ func (a *App) Handle(pattern string, handler http.Handler) {
 }
 
 func (a *App) RegisterRoutes() {
+	a.Mux.Handle("/metrics", promhttp.Handler())
 
-	a.Handle("GET /api/health", http.HandlerFunc(a.checkHealth))
-	a.Handle("/metrics", promhttp.Handler())
+	a.Handle("GET /api/health", appHandler(a.checkHealth))
 
-	a.Handle("GET /api/users/{id}", http.HandlerFunc(a.findUserByID))
-	a.Handle("GET /api/users", http.HandlerFunc(a.findAllUsers))
+	a.Handle("GET /api/users/{id}", appHandler(a.findUserByID))
+	a.Handle("GET /api/users", appHandler(a.findAllUsers))
 
-	a.Handle("POST /api/users", http.HandlerFunc(a.createUser))
+	a.Handle("POST /api/users", appHandler(a.createUser))
 
-	a.Handle("PUT /api/users/{id}", http.HandlerFunc(a.updateUser))
+	a.Handle("PUT /api/users/{id}", appHandler(a.updateUser))
 
-	a.Handle("DELETE /api/users/{id}", http.HandlerFunc(a.deleteUser))
+	a.Handle("DELETE /api/users/{id}", appHandler(a.deleteUser))
 
 }
 
