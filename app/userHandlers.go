@@ -29,11 +29,10 @@ func (a *App) createUser(w http.ResponseWriter, r *http.Request) *appError {
 		return &appError{err, "Invalid json body", http.StatusBadRequest}
 	}
 
-	passwordHash, err := generateHash(user.Password)
+	err = user.HashPassword()
 	if err != nil {
 		return &appError{err, "Could not hash password", http.StatusInternalServerError}
 	}
-	user.PasswordHash = passwordHash
 
 	err = a.UserService.Create(r.Context(), &user)
 	if err != nil {
@@ -64,11 +63,10 @@ func (a *App) updateUser(w http.ResponseWriter, r *http.Request) *appError {
 	}
 	user.ID = id
 
-	passwordHash, err := generateHash(user.Password)
+	err = user.HashPassword()
 	if err != nil {
-		return &appError{err, "could not update user", http.StatusInternalServerError}
+		return &appError{err, "Could not hash password", http.StatusInternalServerError}
 	}
-	user.PasswordHash = passwordHash
 
 	updates := make(map[string]any)
 	updates["first_name"] = user.FirstName

@@ -58,9 +58,8 @@ func AccessLogger(logger *slog.Logger, handler http.Handler) http.Handler {
 
 func SecurityHeaders(logger *slog.Logger, handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Frame-Options", "deny")
-		w.Header().Set("Content-Security-Policy", "frame-ancestors 'none'")
-		w.Header().Set("Referrer-Policy", "origin-when-cross-origin")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json")
 
 		handler.ServeHTTP(w, r)
 	})

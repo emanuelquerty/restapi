@@ -8,7 +8,7 @@ import (
 )
 
 func WriteJSON(logger *slog.Logger, w http.ResponseWriter, data any, statusCode int) {
-	w.Header().Set("Content-Type", "application/json")
+	// w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
 	err := json.NewEncoder(w).Encode(data)
@@ -21,11 +21,10 @@ func WriteJSON(logger *slog.Logger, w http.ResponseWriter, data any, statusCode 
 // Domain User includes password and password hash
 // We do not want to include either in the response
 // so we use response.User instead
-func domainToResponseUser(user domain.User) User {
-	return User{
+func mapToPublicUser(user domain.User) domain.PublicUser {
+	return domain.PublicUser{
 		ID:        user.ID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
-		Email:     user.Email,
 	}
 }

@@ -36,11 +36,10 @@ func TestUserEndpoints(t *testing.T) {
 			t.Fatalf("got %d but want 200", statusCode)
 		}
 
-		wantUser := response.User{
+		wantUser := domain.PublicUser{
 			ID:        1,
 			FirstName: "Peter",
 			LastName:  "Petrelli",
-			Email:     "ppetrelli@email.com",
 		}
 
 		var gotResp response.Response
@@ -71,11 +70,10 @@ func TestUserEndpoints(t *testing.T) {
 			t.Fatalf("got %d but want 201", statusCode)
 		}
 
-		wantUser := response.User{
+		wantUser := domain.PublicUser{
 			ID:        3,
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
-			Email:     user.Email,
 		}
 
 		var gotResp response.Response

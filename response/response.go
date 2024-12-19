@@ -5,10 +5,10 @@ import (
 )
 
 type Response struct {
-	Description  string  `json:"description,omitempty"  bson:"description"`
-	ErrorMessage string  `json:"error_message,omitempty"  bson:"error_message"`
-	User         *User   `json:"user,omitempty"  bson:"user"`
-	Users        *[]User `json:"users,omitempty"  bson:"users"`
+	Description  string               `json:"description,omitempty"  bson:"description"`
+	ErrorMessage string               `json:"error_message,omitempty"  bson:"error_message"`
+	User         *domain.PublicUser   `json:"user,omitempty"  bson:"user"`
+	Users        *[]domain.PublicUser `json:"users,omitempty"  bson:"users"`
 }
 
 func New(descripion string) *Response {
@@ -17,24 +17,19 @@ func New(descripion string) *Response {
 	}
 }
 
-func (r *Response) WithError(err error) *Response {
-	r.ErrorMessage = err.Error()
-	return r
-}
-
 func (r *Response) WithUser(user domain.User) *Response {
-	respUser := domainToResponseUser(user)
-	r.User = &respUser
+	publicUser := mapToPublicUser(user)
+	r.User = &publicUser
 	return r
 }
 
 func (r *Response) WithUsers(users []domain.User) *Response {
-	var respUsers []User
+	var publicUsers []domain.PublicUser
 
 	for _, currUser := range users {
-		user := domainToResponseUser(currUser)
-		respUsers = append(respUsers, user)
+		user := mapToPublicUser(currUser)
+		publicUsers = append(publicUsers, user)
 	}
-	r.Users = &respUsers
+	r.Users = &publicUsers
 	return r
 }
