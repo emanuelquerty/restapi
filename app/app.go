@@ -76,6 +76,18 @@ func (a *App) RegisterRoutes() {
 
 }
 
+func (a *App) checkHealth(w http.ResponseWriter, r *http.Request) *appError {
+	res := struct {
+		Message string
+	}{"Server is running"}
+
+	err := json.NewEncoder(w).Encode(res)
+	if err != nil {
+		return &appError{err, "Invalid json body", http.StatusInternalServerError}
+	}
+	return nil
+}
+
 func (a *App) ListenAndServe(port string) error {
 	a.RegisterRoutes()
 
