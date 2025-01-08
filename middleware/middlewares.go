@@ -38,21 +38,18 @@ func AccessLogger(logger *slog.Logger, handler http.Handler) http.Handler {
 
 		duration := time.Since(start).Milliseconds()
 
-		requestAttr := slog.Group("request",
-			slog.String("method", r.Method),
-			slog.String("url", r.URL.Path),
-			slog.String("protocol", r.Proto))
-
 		responseAtrr := slog.Group("response",
 			slog.Int("status", lrw.StatusCode),
-			slog.Int("size", lrw.BytesCount))
+			slog.Int("size", lrw.BytesCount),
+			slog.String("duration", fmt.Sprintf("%d ms", duration)),
+		)
 
-		labolValue := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
+		endpoint := fmt.Sprintf("%s %s %s", r.Method, r.URL.Path, r.Proto)
 
-		totalRequestCounter.WithLabelValues(labolValue).Inc()
-		requestDurationObserver.WithLabelValues(labolValue).Observe(float64(duration))
+		totalRequestCounter.WithLabelValues(endpoint).Inc()
+		requestDurationObserver.WithLabelValues(endpoint).Observe(float64(duration))
 
-		logger.Info("access", requestAttr, responseAtrr)
+		logger.Info(endpoint, responseAtrr)
 	})
 }
 
